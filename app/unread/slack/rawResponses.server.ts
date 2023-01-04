@@ -8,6 +8,8 @@ export type ChannelBootInfo = {
     is_mpim: boolean;
     is_im: boolean;
     is_private: boolean;
+
+    members?: Array<string>;
 };
 export type ClientBootResponse = {
     self: {
@@ -43,14 +45,14 @@ export type ConversationsViewResponse = {
 };
 
 // users/list
-export type UsersListResponseItem = {
+export type EdgeUserResponseItem = {
     id: string;
     team_id: string;
     name: string;
     real_name: string;
 };
-export type UsersListResponse = {
-    results: Array<UsersListResponseItem>;
+export type EdgeUsersResultsResponse = {
+    results: Array<EdgeUserResponseItem>;
 };
 
 // client.counts

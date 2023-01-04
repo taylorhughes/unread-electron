@@ -6,11 +6,11 @@ import {
     ClientBootResponse,
     ConversationsViewResponse,
     ClientCountsResponse,
-    UsersListResponseItem,
+    EdgeUserResponseItem,
+    EdgeUsersResultsResponse,
     SubscriptionsThreadGetViewResponse,
     ConversationsHistoryResponse,
-    UsersListResponse,
-} from "./responses";
+} from "./rawResponses.server";
 
 type RequestRecord = {
     querystring: string;
@@ -50,7 +50,13 @@ function recordDebugAPIMetadata(type: string, slug: string, metadata: any) {
     }
 
     const baseFilename = path.join(BASE_RESPONSES_DIR, `${type}/${slug}.json`);
-    fs.mkdirSync(path.dirname(baseFilename), { recursive: true });
+    try {
+        fs.mkdirSync(path.dirname(baseFilename), { recursive: true });
+    } catch (e: any) {
+        if (e.code !== "EEXIST") {
+            throw e;
+        }
+    }
 
     let i = 0;
     let filename;
@@ -66,7 +72,7 @@ function recordDebugAPIMetadata(type: string, slug: string, metadata: any) {
     fs.writeSync(fd, JSON.stringify(metadata, null, 2));
 }
 
-export default class PageDataModel {
+export default class SlackPageDataModel {
     bootResponse?: ClientBootResponse;
 
     conversationsResponse?: ConversationsViewResponse;
@@ -74,7 +80,7 @@ export default class PageDataModel {
     countsResponse?: ClientCountsResponse;
 
     usersListResponses: {
-        [userId: string]: UsersListResponseItem | undefined;
+        [userId: string]: EdgeUserResponseItem | undefined;
     } = {};
 
     threadsResponse?: SubscriptionsThreadGetViewResponse;
@@ -214,8 +220,9 @@ export default class PageDataModel {
     private processEdge(slug: string, responseData: any) {
         switch (slug) {
             case "users/list":
+            case "users/info":
                 const results =
-                    (responseData as UsersListResponse)?.results || [];
+                    (responseData as EdgeUsersResultsResponse)?.results || [];
                 results.forEach((result) => {
                     this.usersListResponses[result.id] = result;
                 });
