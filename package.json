@@ -24,6 +24,7 @@
         "@remix-run/react": "^1.4.0",
         "@remix-run/server-runtime": "^1.4.0",
         "fast-glob": "^3.2.11",
+        "openai": "^3.1.0",
         "parse-multipart-data": "^1.5.0",
         "puppeteer": "^19.4.1",
         "react": "^18.0.0",

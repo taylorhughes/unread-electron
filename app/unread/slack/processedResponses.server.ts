@@ -15,26 +15,12 @@ export type Message = {
     unread: boolean;
 };
 
-export type UnreadIM = {
-    id: string;
-    fromName: string;
-    badge: string;
-    lastRead: number;
+export type UnreadStream = {
+    name: string;
+    badge: number;
+    rootMessage?: Message;
     messages: Array<Message>;
-};
-
-export type UnreadChannel = {
-    channelName: string;
-    badge: string;
-    lastRead: number;
-    messages: Array<Message>;
-};
-
-export type UnreadThread = {
-    channelName: string;
-    badge: string;
-    rootMessage: Message;
-    messages: Array<Message>;
+    latestTimestamp: number;
 };
 
 // Utility functions
@@ -77,7 +63,7 @@ export function processUnreadThreads(
     boot: ClientBootResponse,
     userLists: { [userId: string]: EdgeUserResponseItem | undefined },
 ) {
-    const threads = new Array<UnreadThread>();
+    const threads = new Array<UnreadStream>();
     threadsResponse.threads.forEach((thread) => {
         if (!thread.unread_replies) {
             return;
@@ -104,13 +90,11 @@ export function processUnreadThreads(
         messages.sort((a, b) => a.ts - b.ts);
 
         threads.push({
-            channelName: getNameForChannel(channelInfo),
-            badge:
-                thread.unread_replies.length > 0
-                    ? thread.unread_replies.length.toString()
-                    : "•",
+            name: `[thread] ${getNameForChannel(channelInfo)}`,
+            badge: thread.unread_replies.length,
             rootMessage: getMessage(thread.root_msg, rootUser.name, false),
             messages,
+            latestTimestamp: Math.max(...messages.map((m) => m.ts)),
         });
     });
     return threads;
@@ -124,7 +108,7 @@ export function processUnreadChannels(
         [channelId: string]: ConversationsHistoryResponse | undefined;
     },
 ) {
-    const channels = new Array<UnreadChannel>();
+    const channels = new Array<UnreadStream>();
     channelsFromCount.forEach((channel) => {
         if (boot.prefs.muted_channels.includes(channel.id)) {
             return;
@@ -149,16 +133,14 @@ export function processUnreadChannels(
             messages.push(getMessage(message, userInfo?.name, lastRead < ts));
         });
         messages.sort((a, b) => a.ts - b.ts);
-
-        channels.push({
-            channelName: getNameForChannel(channelInfo),
-            badge:
-                channel.mention_count > 0
-                    ? channel.mention_count.toString()
-                    : "•",
-            lastRead: +channel.last_read,
-            messages,
-        });
+        if (messages.length > 0) {
+            channels.push({
+                name: getNameForChannel(channelInfo),
+                badge: channel.mention_count,
+                messages,
+                latestTimestamp: messages[messages.length - 1].ts,
+            });
+        }
     });
     return channels;
 }
@@ -171,7 +153,7 @@ export function processUnreadIMs(
         [channelId: string]: ConversationsHistoryResponse | undefined;
     },
 ) {
-    const imsArray = new Array<UnreadIM>();
+    const imsArray = new Array<UnreadStream>();
     ims.forEach((im) => {
         if (!im.has_unreads) {
             return;
@@ -205,13 +187,14 @@ export function processUnreadIMs(
         });
         messages.sort((a, b) => a.ts - b.ts);
 
-        imsArray.push({
-            id: im.id,
-            fromName: userInfo.name,
-            badge: im.mention_count > 0 ? im.mention_count.toString() : "•",
-            lastRead: +im.last_read,
-            messages,
-        });
+        if (messages.length > 0) {
+            imsArray.push({
+                name: userInfo.name,
+                badge: im.mention_count,
+                messages,
+                latestTimestamp: messages[messages.length - 1].ts,
+            });
+        }
     });
     return imsArray;
 }

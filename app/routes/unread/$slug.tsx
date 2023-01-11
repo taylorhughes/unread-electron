@@ -4,13 +4,9 @@ import { Link, useLoaderData } from "@remix-run/react";
 import { json, redirect } from "@remix-run/node";
 
 import {
-    UnreadChannel,
-    UnreadIM,
-    UnreadThread,
-} from "~/unread/slack/processedResponses.server";
-import {
     sessionNeedsLogin,
     SlackUnreadsResponse,
+    SummarizedUnreadStream,
     startLoading,
 } from "~/unread/slack/index.server";
 
@@ -24,58 +20,51 @@ export function loader({ params: { slug } }: { params: { slug: string } }) {
     });
 }
 
-export function Thread({ thread }: { thread: UnreadThread }) {
-    return (
-        <div key={"thread-" + thread.rootMessage.ts}>
-            <h2>
-                {thread.channelName} ({thread.badge})
-            </h2>
-            <p>
-                <strong>{thread.rootMessage.fromName}</strong>:{" "}
-                {thread.rootMessage.text}
-            </p>
-            <hr />
-            {thread.messages.map((message) => (
-                <div key={message.ts}>
-                    <p>
-                        <strong>{message.fromName}</strong>: {message.text}
-                    </p>
-                </div>
-            ))}
-        </div>
-    );
-}
+export function StreamContent({ stream }: { stream: SummarizedUnreadStream }) {
+    const contentId = "stream-content-" + stream.latestTimestamp;
 
-export function Channel({ channel }: { channel: UnreadChannel }) {
     return (
-        <div key={"channel-" + channel.channelName}>
+        <div key={stream.latestTimestamp}>
             <h2>
-                {channel.channelName} ({channel.badge})
+                {stream.name} ({stream.badge === 0 ? "•" : stream.badge})
             </h2>
-            {channel.messages.map((message) => (
-                <div key={message.ts}>
-                    <p>
-                        <strong>{message.fromName}</strong>: {message.text}
-                    </p>
-                </div>
-            ))}
-        </div>
-    );
-}
 
-export function IM({ im }: { im: UnreadIM }) {
-    return (
-        <div key={"im-" + im.fromName}>
-            <h2>
-                {im.fromName} ({im.badge})
-            </h2>
-            {im.messages.map((message) => (
-                <div key={message.ts}>
-                    <p>
-                        <strong>{message.fromName}</strong>: {message.text}
-                    </p>
-                </div>
-            ))}
+            <div>
+                {stream.summary ?? "(loading...)"}{" "}
+                <a
+                    onClick={() => {
+                        const content = document.getElementById(contentId);
+                        if (content) {
+                            content.style.display =
+                                content.style.display == "block"
+                                    ? "none"
+                                    : "block";
+                        }
+                    }}
+                >
+                    (see raw text)
+                </a>
+            </div>
+
+            <div style={{ display: "none" }} id={contentId}>
+                {stream.rootMessage ? (
+                    <>
+                        {" "}
+                        <p>
+                            <strong>{stream.rootMessage.fromName}</strong>:{" "}
+                            {stream.rootMessage.text}
+                        </p>
+                        <hr />
+                    </>
+                ) : null}
+                {stream.messages.map((message) => (
+                    <div key={message.ts}>
+                        <p>
+                            <strong>{message.fromName}</strong>: {message.text}
+                        </p>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
@@ -111,15 +100,12 @@ export default function Index() {
                 </div>
             ) : (
                 <>
-                    {unreads?.loading ? "Loading..." : null}
-                    {(unreads?.threads ?? []).map((thread) => (
-                        <Thread thread={thread} key={thread.rootMessage.ts} />
-                    ))}
-                    {(unreads?.channels ?? []).map((channel) => (
-                        <Channel channel={channel} key={channel.channelName} />
-                    ))}
-                    {(unreads?.ims ?? [])?.map((im) => (
-                        <IM im={im} key={im.fromName} />
+                    {unreads?.loading ?? true ? "Loading..." : null}
+                    {(unreads?.streams ?? []).map((stream) => (
+                        <StreamContent
+                            stream={stream}
+                            key={stream.latestTimestamp}
+                        />
                     ))}
                 </>
             )}

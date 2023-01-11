@@ -9,7 +9,10 @@ import { Protocol } from "puppeteer";
 let unreadsLoadingByTeamSlug: { [key: string]: number | undefined } = {};
 let unreadsByTeamSlug: { [key: string]: SlackUnreadsResponse | undefined } = {};
 
-export type { SlackUnreadsResponse } from "./SlackUnreadsLoader.server";
+export type {
+    SlackUnreadsResponse,
+    SummarizedUnreadStream,
+} from "./SlackUnreadsLoader.server";
 
 function electronCookieToPuppeteerCookie(
     cookie: Cookie,

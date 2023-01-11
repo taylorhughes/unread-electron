@@ -9,10 +9,9 @@ import {
     processUnreadChannels,
     processUnreadIMs,
     processUnreadThreads,
-    UnreadChannel,
-    UnreadIM,
-    UnreadThread,
+    UnreadStream,
 } from "./processedResponses.server";
+import { summarizeThread } from "../openai/openai.server";
 
 async function waitFor(
     cb: () => boolean,
@@ -27,12 +26,14 @@ async function waitFor(
     }
 }
 
+export type SummarizedUnreadStream = UnreadStream & {
+    summary?: string;
+};
+
 export type SlackUnreadsResponse = {
     loading: boolean;
     validSession?: boolean;
-    channels?: Array<UnreadChannel>;
-    ims?: Array<UnreadIM>;
-    threads?: Array<UnreadThread>;
+    streams?: Array<SummarizedUnreadStream>;
 };
 
 export async function loadUnreads(
@@ -180,29 +181,70 @@ export async function loadUnreads(
 
     await waitFor(() => !!pageData.threadsResponse, 20, "threads responses");
 
+    let streams: SummarizedUnreadStream[] = processUnreadChannels(
+        counts.channels.concat(counts.mpims),
+        boot,
+        pageData.usersListResponses,
+        pageData.conversationsHistory,
+    )
+        .concat(
+            processUnreadIMs(
+                counts.ims,
+                boot,
+                pageData.usersListResponses,
+                pageData.conversationsHistory,
+            ),
+        )
+        .concat(
+            pageData.threadsResponse
+                ? processUnreadThreads(
+                      pageData.threadsResponse,
+                      boot,
+                      pageData.usersListResponses,
+                  )
+                : [],
+        )
+        .sort((a, b) => b.latestTimestamp - a.latestTimestamp);
+
     await browser.close();
 
-    onProgress({
+    const loadedResult = {
         validSession: true,
-        loading: false,
-        threads: pageData.threadsResponse
-            ? processUnreadThreads(
-                  pageData.threadsResponse,
-                  boot,
-                  pageData.usersListResponses,
-              )
-            : [],
-        channels: processUnreadChannels(
-            counts.channels.concat(counts.mpims),
-            boot,
-            pageData.usersListResponses,
-            pageData.conversationsHistory,
-        ),
-        ims: processUnreadIMs(
-            counts.ims,
-            boot,
-            pageData.usersListResponses,
-            pageData.conversationsHistory,
-        ),
+        loading: true,
+        streams: streams,
+    };
+    onProgress(loadedResult);
+
+    const prompt = `
+        Given the following chat conversation:
+    `
+        .replace(/s+/m, " ")
+        .trim();
+    const promptEnd = `
+        Summarize the above chat conversation,
+        including main points (and who made them) into
+        1-2 sentences:
+    `;
+
+    let remaining = streams.length;
+    streams.forEach((stream) => {
+        const text = stream.messages
+            .map((m) => {
+                const simpleText = m.text.replace(/\s+/m, " ").trim();
+                return `${m.fromName}: ${simpleText}`;
+            })
+            .join("\n");
+        summarizeThread(prompt, promptEnd, text)
+            .then((summary) => {
+                stream.summary = summary;
+                remaining -= 1;
+                onProgress({
+                    ...loadedResult,
+                    loading: remaining > 0,
+                });
+            })
+            .catch((err) => {
+                console.error(err);
+            });
     });
 }
