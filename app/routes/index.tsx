@@ -1,5 +1,6 @@
 import { Link, useLoaderData } from "@remix-run/react";
-import { json, MetaFunction } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import RoundedSection from "~/components/RoundedSection";
 
 export function loader() {
     const slackTeams = ["premint", "fotoloce", "optic-xyz"];
@@ -10,12 +11,14 @@ export default function Index() {
     const { slackTeams } = useLoaderData<{ slackTeams: Array<string> }>() ?? {};
     return (
         <main>
-            <h1>Unreads</h1>
-            {slackTeams.map((team) => (
-                <div key={team}>
-                    <Link to={`/unread/${team}`}>Load Slack: {team}</Link>
-                </div>
-            ))}
+            <RoundedSection>
+                <h1>Unreads</h1>
+                {slackTeams.map((team) => (
+                    <div key={team}>
+                        <Link to={`/unread/${team}`}>Load Slack: {team}</Link>
+                    </div>
+                ))}
+            </RoundedSection>
         </main>
     );
 }

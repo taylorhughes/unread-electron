@@ -33,6 +33,10 @@ export type SummarizedUnreadStream = UnreadStream & {
 export type SlackUnreadsResponse = {
     loading: boolean;
     validSession?: boolean;
+    self?: {
+        id: string;
+        name: string;
+    };
     streams?: Array<SummarizedUnreadStream>;
 };
 
@@ -102,7 +106,12 @@ export async function loadUnreads(
         return;
     }
 
-    onProgress({ validSession: true, loading: true });
+    const self = {
+        id: boot.self.id,
+        name: boot.self.name,
+    };
+
+    onProgress({ validSession: true, loading: true, self });
 
     let channelsToFetchUsers = new Array<string>();
     counts.channels.forEach((channel) => {
@@ -211,33 +220,77 @@ export async function loadUnreads(
     const loadedResult = {
         validSession: true,
         loading: true,
-        streams: streams,
+        streams,
+        self,
     };
     onProgress(loadedResult);
 
-    const prompt = `
-        Given the following chat conversation:
-    `
-        .replace(/s+/m, " ")
-        .trim();
+    const prompt = "Given the following chat history:";
     const promptEnd = `
-        Summarize the above chat conversation,
-        including main points (and who made them) into
-        1-2 sentences:
-    `;
+        Generate a summary of the conversation,
+        including main points and who made them.
+        Do not modify the user names.
+        Summarize into 1 concise sentence:
+    `
+        .replace(/\s+/gm, " ")
+        .trim();
+
+    let latestId = 1;
+    let userIdsToIDs = new Map<
+        string,
+        { id: string; name: string; tempId: string }
+    >();
+    Object.values(pageData.usersListResponses).forEach((user) => {
+        if (user) {
+            latestId += 1;
+            userIdsToIDs.set(user.id, {
+                id: user.id,
+                name: user.name,
+                tempId: `U_${latestId}${latestId}${latestId}${latestId}`,
+            });
+        }
+    });
 
     let remaining = streams.length;
     streams.forEach((stream) => {
         const text = stream.messages
             .map((m) => {
-                const simpleText = m.text.replace(/\s+/m, " ").trim();
-                return `${m.fromName}: ${simpleText}`;
+                const userTempId = userIdsToIDs.get(m.fromId)?.tempId;
+                let simpleText = m.text.replace(/\s+/m, " ").trim();
+                for (const user of userIdsToIDs.values()) {
+                    // Replace @mentions inside the text with USER_1111
+                    simpleText = simpleText.replace(
+                        `<@${user.id}>`,
+                        `@${user.tempId}`,
+                    );
+                }
+                return `${userTempId}: ${simpleText}`;
             })
             .join("\n");
+
         summarizeThread(prompt, promptEnd, text)
-            .then((summary) => {
-                stream.summary = summary;
-                remaining -= 1;
+            .then((result) => {
+                let summary = result.text;
+                summary = summary?.replace(/[*]{2,}/g, "*");
+                stream.messages.forEach((m) => {
+                    for (const user of userIdsToIDs.values()) {
+                        const tempIdPart = user.tempId.replace(
+                            "U_",
+                            "(U(ser)?(_| |s_|s |))?",
+                        );
+                        summary = summary?.replace(
+                            new RegExp(`\\b${tempIdPart}\\b`, "i"),
+                            `**${user.name}**`,
+                        );
+                    }
+                });
+                if (result.ellipsis) {
+                    const parts = (summary ?? "").trim().split(/\s+/);
+                    parts.pop(); // sometimes it splits a token at the end
+                    stream.summary = parts.join(" ") + "...";
+                } else {
+                    stream.summary = summary;
+                }
                 onProgress({
                     ...loadedResult,
                     loading: remaining > 0,

@@ -10,6 +10,7 @@ import {
 
 export type Message = {
     fromName: string;
+    fromId: string;
     text: string;
     ts: number;
     unread: boolean;
@@ -36,6 +37,7 @@ function getMessage(
 
     return {
         fromName: from ?? "unknown",
+        fromId: message.user,
         ts: +message.ts,
         text: textParts.join("\n\n"),
         unread,
@@ -90,7 +92,7 @@ export function processUnreadThreads(
         messages.sort((a, b) => a.ts - b.ts);
 
         threads.push({
-            name: `[thread] ${getNameForChannel(channelInfo)}`,
+            name: `[thread] in ${getNameForChannel(channelInfo)}`,
             badge: thread.unread_replies.length,
             rootMessage: getMessage(thread.root_msg, rootUser.name, false),
             messages,
