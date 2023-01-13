@@ -1,7 +1,7 @@
 {
     "name": "unread-electron",
     "description": "",
-    "version": "0.0.0",
+    "version": "2023.1.13",
     "private": true,
     "main": "desktop/main.js",
     "scripts": {
