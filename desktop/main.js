@@ -5,13 +5,27 @@ const { join } = require("node:path");
 let win;
 
 async function createWindow(url) {
-    win = new BrowserWindow({ show: false });
+    win = new BrowserWindow({ show: false, width: 400, height: 300 });
     await win.loadURL(url);
     win.show();
 
     // if (process.env.NODE_ENV === "development") {
     //     win.webContents.openDevTools();
     // }
+
+    win.webContents.on(
+        "new-window",
+        function (
+            evt,
+            url,
+            frameName,
+            disposition,
+            options,
+            additionalFeatures,
+        ) {
+            // update options.width, height
+        },
+    );
 }
 
 app.on("ready", async () => {

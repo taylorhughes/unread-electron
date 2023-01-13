@@ -97,7 +97,7 @@ export const meta: MetaFunction = () => {
     };
 };
 
-export default function Index() {
+export default function Login() {
     const { slug } = useLoaderData<LoaderData>();
     return (
         <main>

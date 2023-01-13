@@ -14,30 +14,6 @@ export type {
     SummarizedUnreadStream,
 } from "./SlackUnreadsLoader.server";
 
-function electronCookieToPuppeteerCookie(
-    cookie: Cookie,
-): Protocol.Network.CookieParam {
-    let sameSite: Protocol.Network.CookieSameSite | undefined;
-    if (cookie.sameSite === "no_restriction") {
-        sameSite = "None";
-    } else if (cookie.sameSite === "lax") {
-        sameSite = "Lax";
-    } else if (cookie.sameSite === "strict") {
-        sameSite = "Strict";
-    }
-
-    return {
-        name: cookie.name,
-        value: cookie.value,
-        domain: cookie.domain,
-        path: cookie.path,
-        expires: cookie.expirationDate,
-        httpOnly: cookie.httpOnly,
-        secure: cookie.secure,
-        sameSite,
-    };
-}
-
 export function startLoading(teamSlug: string): void {
     if (unreadsLoadingByTeamSlug[teamSlug]) {
         return;
@@ -74,6 +50,13 @@ export function getUnreads(teamSlug: string): SlackUnreadsResponse | null {
     return unreadsByTeamSlug[teamSlug] ?? null;
 }
 
+function getSettingsFilename(): string {
+    return path.join(app.getPath("userData"), "unread-settings.json");
+}
+type SettingsFile = {
+    teamSlugs: string[];
+};
+
 function getCredentialsDir(): string {
     return path.join(app.getPath("userData"), "unread-credentials");
 }
@@ -81,6 +64,40 @@ function getCredentialsDir(): string {
 type SlackCredentialsFile = {
     cookies: string[];
 };
+
+function getSettings(): SettingsFile {
+    const settingsFilename = getSettingsFilename();
+    if (fs.existsSync(settingsFilename)) {
+        return JSON.parse(fs.readFileSync(settingsFilename, "utf8"));
+    }
+    return { teamSlugs: [] };
+}
+
+function saveSettings(settings: SettingsFile): void {
+    const settingsFilename = getSettingsFilename();
+    const fd = fs.openSync(settingsFilename, "w");
+    fs.writeSync(fd, JSON.stringify(settings, null, 2));
+}
+
+export function getTeamSlugs(): string[] {
+    return getSettings().teamSlugs;
+}
+
+export function addTeamSlug(teamSlug: string): void {
+    const settingsFilename = getSettingsFilename();
+
+    let settings = getSettings();
+    settings.teamSlugs.push(teamSlug);
+    saveSettings(settings);
+}
+
+export function removeTeamSlug(teamSlug: string): void {
+    const settingsFilename = getSettingsFilename();
+
+    let settings = getSettings();
+    settings.teamSlugs = settings.teamSlugs.filter((s) => s !== teamSlug);
+    saveSettings(settings);
+}
 
 export function storeCredentials(teamSlug: string, cookies: Cookie[]): void {
     const encryptedCookies = new Array<string>();
@@ -125,4 +142,28 @@ export function credentialsForTeam(teamSlug: string): Cookie[] | null {
                 ),
             ) as Cookie,
     );
+}
+
+function electronCookieToPuppeteerCookie(
+    cookie: Cookie,
+): Protocol.Network.CookieParam {
+    let sameSite: Protocol.Network.CookieSameSite | undefined;
+    if (cookie.sameSite === "no_restriction") {
+        sameSite = "None";
+    } else if (cookie.sameSite === "lax") {
+        sameSite = "Lax";
+    } else if (cookie.sameSite === "strict") {
+        sameSite = "Strict";
+    }
+
+    return {
+        name: cookie.name,
+        value: cookie.value,
+        domain: cookie.domain,
+        path: cookie.path,
+        expires: cookie.expirationDate,
+        httpOnly: cookie.httpOnly,
+        secure: cookie.secure,
+        sameSite,
+    };
 }

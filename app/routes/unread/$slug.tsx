@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { useInterval } from "react-use";
 import { Link, useLoaderData } from "@remix-run/react";
-import { ActionArgs, json, LoaderArgs, redirect } from "@remix-run/node";
+import {
+    ActionArgs,
+    json,
+    LoaderArgs,
+    MetaFunction,
+    redirect,
+} from "@remix-run/node";
 
 import {
     sessionNeedsLogin,
@@ -22,6 +28,12 @@ export function loader({ params: { slug } }: LoaderArgs) {
         slug: slug,
     });
 }
+
+export const meta: MetaFunction = ({ data }) => {
+    return {
+        title: `Unreads: ${data.slug}`,
+    };
+};
 
 export const action = async ({ request, params: { slug } }: ActionArgs) => {
     const formData = await request.formData();
@@ -134,7 +146,7 @@ function UnreadContent({ unreads }: { unreads: SlackUnreadsResponse | null }) {
     );
 }
 
-export default function Index() {
+export default function Unread() {
     const { slug } = useLoaderData<{
         slug: string;
     }>();
