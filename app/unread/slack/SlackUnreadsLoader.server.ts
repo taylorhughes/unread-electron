@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, session } from "electron";
 import pie from "puppeteer-in-electron";
 import { Protocol } from "puppeteer";
 import puppeteer from "puppeteer-core";
@@ -49,10 +49,13 @@ export async function loadUnreads(
 
     const browser = await pie.connect(app, puppeteer as any);
 
+    const random = Math.random().toString(36).substring(2);
+    const slackSession = session.fromPartition(`slack:${random}`);
     const window = new BrowserWindow({
         transparent: true,
         frame: false,
         show: false,
+        webPreferences: { session: slackSession },
     });
     const page = await pie.getPage(browser, window);
 
