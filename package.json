@@ -19,7 +19,8 @@
             "desktop",
             "public",
             "remix.config.js"
-        ]
+        ],
+        "icon": "resources/icon.png"
     },
     "dependencies": {
         "@remix-run/node": "^1.4.0",

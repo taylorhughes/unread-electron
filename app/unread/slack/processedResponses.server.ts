@@ -63,7 +63,7 @@ function getNameForChannel(channelInfo: ChannelBootInfo) {
 export function processUnreadThreads(
     threadsResponse: SubscriptionsThreadGetViewResponse,
     boot: ClientBootResponse,
-    userLists: { [userId: string]: EdgeUserResponseItem | undefined },
+    userLists: Map<string, EdgeUserResponseItem>,
 ) {
     const threads = new Array<UnreadStream>();
     threadsResponse.threads.forEach((thread) => {
@@ -74,7 +74,7 @@ export function processUnreadThreads(
         const channelInfo = boot.channels.find(
             (c) => c.id === thread.root_msg.channel,
         );
-        const rootUser = userLists[thread.root_msg.user];
+        const rootUser = userLists.get(thread.root_msg.user);
         if (!channelInfo || !rootUser) {
             console.error(
                 "Could not find channel info or user for thread root message",
@@ -86,7 +86,7 @@ export function processUnreadThreads(
         }
 
         const messages = thread.unread_replies.map((reply) => {
-            const replyUser = userLists[reply.user];
+            const replyUser = userLists.get(reply.user);
             return getMessage(reply, replyUser?.name);
         });
         messages.sort((a, b) => a.ts - b.ts);
@@ -105,7 +105,7 @@ export function processUnreadThreads(
 export function processUnreadChannels(
     channelsFromCount: Array<ClientCountChannelish>,
     boot: ClientBootResponse,
-    userLists: { [userId: string]: EdgeUserResponseItem | undefined },
+    userLists: Map<string, EdgeUserResponseItem>,
     converationsHistory: {
         [channelId: string]: ConversationsHistoryResponse | undefined;
     },
@@ -130,7 +130,7 @@ export function processUnreadChannels(
         const messages = new Array<Message>();
         const history = converationsHistory[channel.id];
         history?.messages.forEach((message) => {
-            const userInfo = userLists[message.user];
+            const userInfo = userLists.get(message.user);
             const ts = +message.ts;
             messages.push(getMessage(message, userInfo?.name, lastRead < ts));
         });
@@ -150,7 +150,7 @@ export function processUnreadChannels(
 export function processUnreadIMs(
     ims: Array<ClientCountChannelish>,
     boot: ClientBootResponse,
-    userLists: { [userId: string]: EdgeUserResponseItem | undefined },
+    userLists: Map<string, EdgeUserResponseItem>,
     converationsHistory: {
         [channelId: string]: ConversationsHistoryResponse | undefined;
     },
@@ -172,7 +172,7 @@ export function processUnreadIMs(
             return;
         }
 
-        const userInfo = userLists[userId];
+        const userInfo = userLists.get(userId);
         if (!userInfo) {
             console.error("Could not find user info for ID", userId);
             return;
@@ -183,7 +183,7 @@ export function processUnreadIMs(
         const messages = new Array<Message>();
         const history = converationsHistory[im.id];
         history?.messages.forEach((message) => {
-            const userInfo = userLists[message.user];
+            const userInfo = userLists.get(message.user);
             const ts = +message.ts;
             messages.push(getMessage(message, userInfo?.name, lastRead < ts));
         });

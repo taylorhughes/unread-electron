@@ -27,6 +27,7 @@ async function waitFor(
 }
 
 export type SummarizedUnreadStream = UnreadStream & {
+    promptText?: string;
     summary?: string;
 };
 
@@ -160,7 +161,7 @@ export async function loadUnreads(
     }
 
     await waitFor(
-        () => Object.keys(pageData.usersListResponses).length > 1,
+        () => pageData.usersListResponses.size > 1,
         20,
         "user list responses",
     );
@@ -233,33 +234,35 @@ export async function loadUnreads(
         string,
         { id: string; name: string; tempId: string }
     >();
-    Object.values(pageData.usersListResponses).forEach((user) => {
-        if (user) {
+    Array.from(pageData.usersListResponses.values())
+        .concat([boot.self])
+        .forEach((user) => {
             latestId += 1;
             userIdsToIDs.set(user.id, {
                 id: user.id,
                 name: user.name,
                 tempId: `U_${latestId}${latestId}${latestId}${latestId}`,
             });
-        }
-    });
+        });
 
     let remaining = streams.length;
     streams.forEach((stream) => {
         const text = stream.messages
             .map((m) => {
                 const userTempId = userIdsToIDs.get(m.fromId)?.tempId;
-                let simpleText = m.text.replace(/\s+/m, " ").trim();
+                let simpleText = m.text.replace(/\s+/gm, " ").trim();
                 for (const user of userIdsToIDs.values()) {
                     // Replace @mentions inside the text with USER_1111
                     simpleText = simpleText.replace(
-                        `<@${user.id}>`,
+                        new RegExp(`<@${user.id}>`, "g"),
                         `@${user.tempId}`,
                     );
                 }
                 return `${userTempId}: ${simpleText}`;
             })
             .join("\n");
+
+        stream.promptText = text;
 
         summarizeThread(prompt, promptEnd, text)
             .then((result) => {
@@ -272,7 +275,7 @@ export async function loadUnreads(
                             "(U(ser)?(_| |s_|s |))?",
                         );
                         summary = summary?.replace(
-                            new RegExp(`\\b${tempIdPart}\\b`, "i"),
+                            new RegExp(`\\b${tempIdPart}\\b`, "gi"),
                             `**${user.name}**`,
                         );
                     }
@@ -284,6 +287,8 @@ export async function loadUnreads(
                 } else {
                     stream.summary = summary;
                 }
+
+                remaining -= 1;
                 onProgress({
                     ...loadedResult,
                     loading: remaining > 0,

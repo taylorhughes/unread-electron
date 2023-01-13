@@ -84,9 +84,7 @@ export default class SlackPageDataModel {
 
     countsResponse?: ClientCountsResponse;
 
-    usersListResponses: {
-        [userId: string]: EdgeUserResponseItem | undefined;
-    } = {};
+    usersListResponses = new Map<string, EdgeUserResponseItem>();
 
     threadsResponse?: SubscriptionsThreadGetViewResponse;
 
@@ -252,7 +250,7 @@ export default class SlackPageDataModel {
                 const results =
                     (responseData as EdgeUsersResultsResponse)?.results || [];
                 results.forEach((result) => {
-                    this.usersListResponses[result.id] = result;
+                    this.usersListResponses.set(result.id, result);
                 });
                 break;
         }
