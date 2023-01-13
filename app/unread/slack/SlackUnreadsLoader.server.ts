@@ -26,7 +26,7 @@ async function waitFor(
 }
 
 export type SummarizedUnreadStream = UnreadStream & {
-    promptText?: string;
+    promptParts?: string[];
     summary?: string;
 };
 
@@ -264,9 +264,9 @@ export async function loadUnreads(
             })
             .join("\n");
 
-        stream.promptText = text;
+        stream.promptParts = [prompt, text, promptEnd];
 
-        summarizeThread(prompt, promptEnd, text)
+        summarizeThread(stream.promptParts)
             .then((result) => {
                 let summary = result.text;
                 summary = summary?.replace(/[*]{2,}/g, "*");

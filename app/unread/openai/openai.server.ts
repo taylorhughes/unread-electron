@@ -13,14 +13,10 @@ const configuration = new Configuration({
 });
 const client = new OpenAIApi(configuration);
 
-export async function summarizeThread(
-    promptStart: string,
-    promptEnd: string,
-    text: string,
-) {
+export async function summarizeThread(parts: string[]) {
     const ret = await client.createCompletion({
         model: TEXT_MODEL,
-        prompt: `${promptStart}\n\n${text}\n\n${promptEnd}`,
+        prompt: parts.join("\n\n"),
         max_tokens: 64,
     });
 

@@ -59,6 +59,7 @@ function SummaryText({ text }: { text: string | undefined }) {
 
 export function StreamContent({ stream }: { stream: SummarizedUnreadStream }) {
     const contentId = "stream-content-" + stream.latestTimestamp;
+    const promptId = "stream-prompt-" + stream.latestTimestamp;
 
     return (
         <RoundedSection
@@ -83,7 +84,21 @@ export function StreamContent({ stream }: { stream: SummarizedUnreadStream }) {
                         }
                     }}
                 >
-                    raw text
+                    see messages
+                </a>
+                {" • "}
+                <a
+                    onClick={() => {
+                        const content = document.getElementById(promptId);
+                        if (content) {
+                            content.style.display =
+                                content.style.display == "block"
+                                    ? "none"
+                                    : "block";
+                        }
+                    }}
+                >
+                    prompt
                 </a>
             </div>
             <div style={{ display: "none" }} id={contentId}>
@@ -104,6 +119,14 @@ export function StreamContent({ stream }: { stream: SummarizedUnreadStream }) {
                         </p>
                     </div>
                 ))}
+            </div>
+            <div style={{ display: "none" }} id={promptId}>
+                <textarea
+                    className="p-2 bg-white w-full h-20"
+                    onClick={(evt) => (evt.target as HTMLInputElement).select()}
+                >
+                    {stream.promptParts?.join("\n\n") ?? "(missing)"}
+                </textarea>
             </div>
         </RoundedSection>
     );
