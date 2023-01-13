@@ -20,7 +20,8 @@
             "public",
             "remix.config.js"
         ],
-        "icon": "resources/icon.png"
+        "icon": "resources/icon.png",
+        "productName": "Unread Buddy"
     },
     "dependencies": {
         "@remix-run/node": "^1.4.0",

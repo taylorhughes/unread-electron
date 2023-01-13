@@ -12,6 +12,7 @@ import {
     redirect,
     MetaFunction,
 } from "@remix-run/server-runtime";
+import { APP_NAME } from "~/unread/config";
 
 export function loader({}: LoaderArgs) {
     return json({ slackTeams: getTeamSlugs() });
@@ -19,7 +20,7 @@ export function loader({}: LoaderArgs) {
 
 export const meta: MetaFunction = () => {
     return {
-        title: "Unreads: Slack Teams",
+        title: `${APP_NAME}: Slack Teams`,
     };
 };
 
@@ -41,11 +42,10 @@ export default function Index() {
     return (
         <main>
             <RoundedSection>
-                <h1>Unreads</h1>
                 {slackTeams.map((team) => (
                     <div key={team} className="flex justify-between">
                         <Link target="_blank" to={`/unread/${team}`}>
-                            Unreads for {team}
+                            {team} ↗
                         </Link>
                         <form method="post" action="/?index">
                             <input

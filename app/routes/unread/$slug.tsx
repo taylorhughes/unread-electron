@@ -18,6 +18,7 @@ import {
 } from "~/unread/slack/index.server";
 import RoundedSection from "~/components/RoundedSection";
 import Loading from "~/components/Loading";
+import { APP_NAME } from "~/unread/config";
 
 export function loader({ params: { slug } }: LoaderArgs) {
     startLoading(slug!);
@@ -31,7 +32,7 @@ export function loader({ params: { slug } }: LoaderArgs) {
 
 export const meta: MetaFunction = ({ data }) => {
     return {
-        title: `Unreads: ${data.slug}`,
+        title: `${APP_NAME}: ${data.slug}`,
     };
 };
 

@@ -8,6 +8,7 @@ import {
     clearLoadingState,
     storeCredentials,
 } from "~/unread/slack/index.server";
+import { APP_NAME } from "~/unread/config";
 
 let slackWindow: BrowserWindow | null = null;
 
@@ -101,7 +102,7 @@ export default function Login() {
     const { slug } = useLoaderData<LoaderData>();
     return (
         <main>
-            <h1>Unreads: Login</h1>
+            <h1>{APP_NAME}: Login</h1>
             <p>Waiting for you to log into slack workspace {slug}...</p>
         </main>
     );
