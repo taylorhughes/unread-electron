@@ -1,6 +1,0 @@
-
-body:before {
-  content: "Looks like something is broken with Tailwind, it has not compiled";
-  background: red;
-  padding: 10px;
-}

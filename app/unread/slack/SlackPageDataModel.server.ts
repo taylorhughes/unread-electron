@@ -44,12 +44,17 @@ function getPostData(request: HTTPRequest) {
 
 export const BASE_RESPONSES_DIR = path.join(__dirname, "..", "..", "responses");
 
-function recordDebugAPIMetadata(type: string, slug: string, metadata: any) {
+function recordDebugAPIMetadata(
+    baseDir: string,
+    type: string,
+    apiPath: string,
+    metadata: any,
+) {
     if (process.env.NODE_ENV !== "development") {
         return;
     }
 
-    const baseFilename = path.join(BASE_RESPONSES_DIR, `${type}/${slug}.json`);
+    const baseFilename = path.join(baseDir, `${type}/${apiPath}.json`);
     try {
         fs.mkdirSync(path.dirname(baseFilename), { recursive: true });
     } catch (e: any) {
@@ -91,6 +96,29 @@ export default class SlackPageDataModel {
 
     private edgeRequests: RequestRecord[] = [];
 
+    private slug: string;
+    private recordResponsesDir: string | null = null;
+
+    constructor({
+        slug,
+        recordResponses,
+    }: {
+        slug: string;
+        recordResponses?: boolean;
+    }) {
+        this.slug = slug;
+
+        if (recordResponses) {
+            this.recordResponsesDir = path.join(BASE_RESPONSES_DIR, slug);
+            // remove files from dir:
+            try {
+                fs.rmdirSync(this.recordResponsesDir, { recursive: true });
+            } catch (e) {
+                // ignore, probably ENOENT
+            }
+        }
+    }
+
     private recordEdgeRequest(
         request: HTTPRequest,
         requestParams: Record<string, string>,
@@ -107,12 +135,12 @@ export default class SlackPageDataModel {
     public createEdgeFetch(slug: string, params: { [key: string]: any }) {
         const edgeRequest = this.edgeRequests[0];
         if (!edgeRequest) {
-            console.error("No previous edge request");
+            console.error(`[${this.slug}] No previous edge request`);
             return null;
         }
         const boot = this.bootResponse;
         if (!boot) {
-            console.error("No boot response");
+            console.error(`[${this.slug}] No boot response`);
             return null;
         }
 
@@ -154,7 +182,7 @@ export default class SlackPageDataModel {
     public createAPIFetch(slug: string, params: { [key: string]: any }) {
         const apiRequest = this.apiRequests[this.apiRequests.length - 1];
         if (!apiRequest) {
-            console.error("No previous edge request");
+            console.error(`[${this.slug}] No previous edge request`);
             return null;
         }
 
@@ -182,11 +210,11 @@ export default class SlackPageDataModel {
     }
 
     private async processAPI(
-        slug: string,
+        apiPath: string,
         requestParams: Record<string, string>,
         responseData: any,
     ) {
-        switch (slug) {
+        switch (apiPath) {
             case "client.boot":
                 this.bootResponse = responseData as ClientBootResponse;
                 break;
@@ -217,8 +245,8 @@ export default class SlackPageDataModel {
         }
     }
 
-    private processEdge(slug: string, responseData: any) {
-        switch (slug) {
+    private processEdge(apiPath: string, responseData: any) {
+        switch (apiPath) {
             case "users/list":
             case "users/info":
                 const results =
@@ -233,15 +261,15 @@ export default class SlackPageDataModel {
     public async addResponseData(request: HTTPRequest, response: HTTPResponse) {
         const url = response.url();
 
-        let slug;
+        let apiPath;
         let type: undefined | "api" | "edge";
         if (url.includes("/api/")) {
             // https://premint.slack.com/api/experiments.getByUser?_x_id=noversion-1672
-            slug = url.split("/api/")[1].split("?")[0];
+            apiPath = url.split("/api/")[1].split("?")[0];
             type = "api";
         } else if (url.includes("edgeapi")) {
             // https://edgeapi.slack.com/cache/T03DFV746MP/users/info?fp=1d
-            slug = url.split(/\/cache\/\w+\//)[1].split("?")[0];
+            apiPath = url.split(/\/cache\/\w+\//)[1].split("?")[0];
             type = "edge";
         } else {
             return;
@@ -251,27 +279,33 @@ export default class SlackPageDataModel {
         try {
             responseData = await response.json();
         } catch (e) {
-            console.error("Could not load response JSON:", slug, responseData);
+            console.error(
+                "Could not load response JSON:",
+                apiPath,
+                responseData,
+            );
             return;
         }
 
         const requestParams = getPostData(request);
 
-        recordDebugAPIMetadata(type, slug, {
-            url: request.url(),
-            headers: request.headers(),
-            requestParams,
-            responseData,
-        });
+        if (this.recordResponsesDir) {
+            recordDebugAPIMetadata(this.recordResponsesDir, type, apiPath, {
+                url: request.url(),
+                headers: request.headers(),
+                requestParams,
+                responseData,
+            });
+        }
 
-        console.log(`[${type} request] ${slug}`);
+        console.log(`[${this.slug}] [${type} request] ${apiPath}`);
 
         if (type == "api") {
             this.recordAPIRequest(request, requestParams);
-            this.processAPI(slug, requestParams, responseData);
+            this.processAPI(apiPath, requestParams, responseData);
         } else if (type == "edge") {
             this.recordEdgeRequest(request, requestParams);
-            this.processEdge(slug, responseData);
+            this.processEdge(apiPath, responseData);
         }
     }
 }

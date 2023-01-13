@@ -1,26 +1,35 @@
 import { useState } from "react";
 import { useInterval } from "react-use";
 import { Link, useLoaderData } from "@remix-run/react";
-import { json, redirect } from "@remix-run/node";
+import { ActionArgs, json, LoaderArgs, redirect } from "@remix-run/node";
 
 import {
     sessionNeedsLogin,
     SlackUnreadsResponse,
     SummarizedUnreadStream,
     startLoading,
+    clearLoadingState,
 } from "~/unread/slack/index.server";
 import RoundedSection from "~/components/RoundedSection";
 import Loading from "~/components/Loading";
 
-export function loader({ params: { slug } }: { params: { slug: string } }) {
-    startLoading(slug);
-    if (sessionNeedsLogin(slug)) {
+export function loader({ params: { slug } }: LoaderArgs) {
+    startLoading(slug!);
+    if (sessionNeedsLogin(slug!)) {
         return redirect(`/login/${slug}`);
     }
     return json({
         slug: slug,
     });
 }
+
+export const action = async ({ request, params: { slug } }: ActionArgs) => {
+    const formData = await request.formData();
+    if (formData.get("reload") == "1") {
+        clearLoadingState(slug!);
+    }
+    return redirect(`/unread/${slug}`);
+};
 
 function SummaryText({ text }: { text: string | undefined }) {
     if (text === undefined) {
@@ -39,14 +48,17 @@ export function StreamContent({ stream }: { stream: SummarizedUnreadStream }) {
     const contentId = "stream-content-" + stream.latestTimestamp;
 
     return (
-        <RoundedSection key={stream.latestTimestamp}>
-            <h2 style={{ fontSize: "1em" }}>{stream.name}</h2>
+        <RoundedSection
+            key={stream.latestTimestamp}
+            backgroundClass={stream.badge > 0 ? "bg-yellow-100" : undefined}
+        >
+            <h2>{stream.name}</h2>
 
-            <div style={{ margin: "10px 0", lineHeight: "1.4em" }}>
+            <div className="my-2">
                 <SummaryText text={stream.summary} />
             </div>
 
-            <div style={{ marginTop: "5px" }}>
+            <div>
                 <a
                     onClick={() => {
                         const content = document.getElementById(contentId);
@@ -89,7 +101,11 @@ function AccountInfo({ unreads }: { unreads: SlackUnreadsResponse | null }) {
         return null;
     }
 
-    return <span>Logged in as {unreads.self.name}</span>;
+    return (
+        <span>
+            logged in as <strong>{unreads.self.name}</strong>
+        </span>
+    );
 }
 
 function UnreadContent({ unreads }: { unreads: SlackUnreadsResponse | null }) {
@@ -102,7 +118,11 @@ function UnreadContent({ unreads }: { unreads: SlackUnreadsResponse | null }) {
     }
 
     if (unreads.streams.length === 0) {
-        return <RoundedSection>No unread messages</RoundedSection>;
+        return (
+            <RoundedSection>
+                <div className="text-center">No unread messages</div>
+            </RoundedSection>
+        );
     }
 
     return (
@@ -120,6 +140,7 @@ export default function Index() {
     }>();
 
     const [unreads, setUnreads] = useState<SlackUnreadsResponse | null>(null);
+    const loading = unreads?.loading !== false;
 
     useInterval(
         () => {
@@ -129,22 +150,26 @@ export default function Index() {
                     setUnreads(unreads);
                 });
         },
-        unreads?.loading !== false ? 1000 : null,
+        loading ? 1000 : null,
     );
 
     return (
         <main>
             <RoundedSection>
-                <nav>
-                    <Link to="/">← Home</Link>
-                    {unreads?.self ? (
-                        <>
-                            <span> • </span>
-                            <AccountInfo unreads={unreads} />
-                        </>
-                    ) : null}
-                </nav>
-                <h1>Unreads for {slug}</h1>
+                <div className="flex items-center justify-center space-x-2">
+                    <h1 className="flex-grow">{slug}</h1>
+                    <AccountInfo unreads={unreads} />
+                    <form method="post" action={`/unread/${slug}`}>
+                        <button
+                            className="btn btn-blue"
+                            disabled={loading}
+                            name="reload"
+                            value="1"
+                        >
+                            Reload
+                        </button>
+                    </form>
+                </div>
             </RoundedSection>
             {unreads?.validSession === false ? (
                 <RoundedSection>

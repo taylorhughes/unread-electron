@@ -1,6 +1,5 @@
 node_modules
 
-# compiled before the real remix compilation
 /app/styles/compiledtailwind.css
 
 /.cache

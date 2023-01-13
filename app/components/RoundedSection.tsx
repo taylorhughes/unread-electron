@@ -1,17 +1,18 @@
-const STYLE = {
-    borderRadius: "5px",
-    backgroundColor: "#fff",
-    padding: "10px",
-    marginBottom: "10px",
-};
-
 export default function RoundedSection({
     children,
+    backgroundClass,
 }: {
     children: React.ReactNode;
+    backgroundClass?: string;
 }) {
     return (
-        <section className="rounded-section" style={STYLE}>
+        <section
+            className={`rounded-lg m-5 p-3 ${
+                backgroundClass?.length ?? 0 > 0
+                    ? backgroundClass
+                    : "bg-slate-50"
+            }`}
+        >
             {children}
         </section>
     );

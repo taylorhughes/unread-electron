@@ -25,7 +25,8 @@
       "**/dist": true,
       "**/coverage": true,
       "**/desktop/build": true,
-      "**/public/build": true
+      "**/public/build": true,
+      "**/app/styles/compiledtailwind.css": true,
     },
     "typescript.referencesCodeLens.enabled": true,
     "appService.zipIgnorePattern": [".vscode{,/**}"],

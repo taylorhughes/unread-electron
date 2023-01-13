@@ -15,7 +15,9 @@ export default function Index() {
                 <h1>Unreads</h1>
                 {slackTeams.map((team) => (
                     <div key={team}>
-                        <Link to={`/unread/${team}`}>Load Slack: {team}</Link>
+                        <Link target="_blank" to={`/unread/${team}`}>
+                            Open Slack: {team}
+                        </Link>
                     </div>
                 ))}
             </RoundedSection>

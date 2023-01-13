@@ -6,14 +6,39 @@ import {
     Outlet,
     Scripts,
     ScrollRestoration,
+    useCatch,
 } from "@remix-run/react";
-import styles from "./styles.css";
+import baseStyles from "./styles/base.css";
+import tailwindStyles from "./styles/compiledtailwind.css";
+
+export function CatchBoundary() {
+    const caught = useCatch();
+    return (
+        <html>
+            <head>
+                <title>Oops!</title>
+                <Meta />
+                <Links />
+            </head>
+            <body className="flex flex-col items-center justify-center h-screen">
+                <h1>
+                    {caught.status} {caught.statusText}
+                </h1>
+                <pre>{caught.data}</pre>
+                <Scripts />
+            </body>
+        </html>
+    );
+}
 
 export const meta: MetaFunction = () => ({
     title: "New Remix App",
 });
 
-export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
+export const links: LinksFunction = () => [
+    { rel: "stylesheet", href: baseStyles },
+    { rel: "stylesheet", href: tailwindStyles },
+];
 
 export default function App() {
     return (

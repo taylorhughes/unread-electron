@@ -47,14 +47,6 @@ export async function loadUnreads(
 ): Promise<void> {
     onProgress({ loading: true });
 
-    try {
-        fs.rmSync(BASE_RESPONSES_DIR, { recursive: true });
-    } catch (e: any) {
-        if (e.code !== "ENOENT") {
-            throw e;
-        }
-    }
-
     const browser = await puppeteer.launch({
         headless: true,
         defaultViewport: {
@@ -67,7 +59,10 @@ export async function loadUnreads(
     await page.setCookie(...cookies);
     await page.setRequestInterception(true);
 
-    const pageData = new SlackPageDataModel();
+    const pageData = new SlackPageDataModel({
+        slug,
+        recordResponses: process.env.NODE_ENV === "development",
+    });
 
     page.on("request", (request) => {
         request.continue();
@@ -80,9 +75,7 @@ export async function loadUnreads(
         }
     });
 
-    const initialResponse = await page.goto(
-        `https://${slug}.slack.com/unreads`,
-    );
+    await page.goto(`https://${slug}.slack.com/unreads`);
 
     const currentUrl = page.url();
     if (currentUrl.indexOf("https://app.slack.com/client/") != 0) {
@@ -219,7 +212,7 @@ export async function loadUnreads(
 
     const loadedResult = {
         validSession: true,
-        loading: true,
+        loading: streams.length > 0,
         streams,
         self,
     };
