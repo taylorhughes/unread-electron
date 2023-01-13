@@ -1,6 +1,7 @@
 const { initRemix } = require("remix-electron");
 const { app, BrowserWindow, dialog } = require("electron");
 const { join } = require("node:path");
+const pie = require("puppeteer-in-electron");
 
 let win;
 
@@ -27,6 +28,8 @@ async function createWindow(url) {
         },
     );
 }
+
+pie.initialize(app);
 
 app.on("ready", async () => {
     try {

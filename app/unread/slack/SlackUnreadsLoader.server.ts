@@ -1,10 +1,9 @@
-import fs from "fs";
+import { app, BrowserWindow } from "electron";
+import pie from "puppeteer-in-electron";
+import { Protocol } from "puppeteer";
+import puppeteer from "puppeteer-core";
 
-import puppeteer, { Protocol } from "puppeteer";
-
-import SlackPageDataModel, {
-    BASE_RESPONSES_DIR,
-} from "./SlackPageDataModel.server";
+import SlackPageDataModel from "./SlackPageDataModel.server";
 import {
     processUnreadChannels,
     processUnreadIMs,
@@ -48,14 +47,14 @@ export async function loadUnreads(
 ): Promise<void> {
     onProgress({ loading: true });
 
-    const browser = await puppeteer.launch({
-        headless: true,
-        defaultViewport: {
-            width: 1200 + Math.floor(Math.random() * 1024),
-            height: 1600 + Math.floor(Math.random() * 1024),
-        },
+    const browser = await pie.connect(app, puppeteer as any);
+
+    const window = new BrowserWindow({
+        transparent: true,
+        frame: false,
+        show: false,
     });
-    const [page] = await browser.pages();
+    const page = await pie.getPage(browser, window);
 
     await page.setCookie(...cookies);
     await page.setRequestInterception(true);
@@ -209,7 +208,7 @@ export async function loadUnreads(
         )
         .sort((a, b) => b.latestTimestamp - a.latestTimestamp);
 
-    await browser.close();
+    await window.destroy();
 
     const loadedResult = {
         validSession: true,
