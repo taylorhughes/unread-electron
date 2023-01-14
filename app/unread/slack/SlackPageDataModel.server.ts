@@ -1,4 +1,4 @@
-import { HTTPRequest, HTTPResponse } from "puppeteer";
+import { HTTPRequest, HTTPResponse } from "puppeteer-core";
 import fs from "fs";
 import path from "path";
 import { getBoundary, parse } from "parse-multipart-data";
@@ -88,9 +88,7 @@ export default class SlackPageDataModel {
 
     threadsResponse?: SubscriptionsThreadGetViewResponse;
 
-    conversationsHistory: {
-        [channelId: string]: ConversationsHistoryResponse | undefined;
-    } = {};
+    conversationsHistory: Map<string, ConversationsHistoryResponse> = new Map();
 
     private edgeRequests: RequestRecord[] = [];
 
@@ -100,19 +98,22 @@ export default class SlackPageDataModel {
     constructor({
         slug,
         recordResponses,
+        resetResponses,
     }: {
         slug: string;
         recordResponses?: boolean;
+        resetResponses?: boolean;
     }) {
         this.slug = slug;
 
         if (recordResponses) {
             this.recordResponsesDir = path.join(BASE_RESPONSES_DIR, slug);
-            // remove files from dir:
-            try {
-                fs.rmdirSync(this.recordResponsesDir, { recursive: true });
-            } catch (e) {
-                // ignore, probably ENOENT
+            if (resetResponses) {
+                try {
+                    fs.rmdirSync(this.recordResponsesDir, { recursive: true });
+                } catch (e) {
+                    // ignore, probably ENOENT
+                }
             }
         }
     }
@@ -221,7 +222,7 @@ export default class SlackPageDataModel {
                 const typedData = responseData as ConversationsHistoryResponse;
                 const channel = requestParams.channel;
                 if (channel && typedData) {
-                    this.conversationsHistory[channel] = typedData;
+                    this.conversationsHistory.set(channel, typedData);
                 } else {
                     throw new Error("Unknown conversations.history format");
                 }

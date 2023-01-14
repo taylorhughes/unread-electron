@@ -106,9 +106,7 @@ export function processUnreadChannels(
     channelsFromCount: Array<ClientCountChannelish>,
     boot: ClientBootResponse,
     userLists: Map<string, EdgeUserResponseItem>,
-    converationsHistory: {
-        [channelId: string]: ConversationsHistoryResponse | undefined;
-    },
+    converationsHistory: Map<string, ConversationsHistoryResponse>,
 ) {
     const channels = new Array<UnreadStream>();
     channelsFromCount.forEach((channel) => {
@@ -128,7 +126,7 @@ export function processUnreadChannels(
         const lastRead = +channel.last_read;
 
         const messages = new Array<Message>();
-        const history = converationsHistory[channel.id];
+        const history = converationsHistory.get(channel.id);
         history?.messages.forEach((message) => {
             const userInfo = userLists.get(message.user);
             const ts = +message.ts;
@@ -151,9 +149,7 @@ export function processUnreadIMs(
     ims: Array<ClientCountChannelish>,
     boot: ClientBootResponse,
     userLists: Map<string, EdgeUserResponseItem>,
-    converationsHistory: {
-        [channelId: string]: ConversationsHistoryResponse | undefined;
-    },
+    converationsHistory: Map<string, ConversationsHistoryResponse>,
 ) {
     const imsArray = new Array<UnreadStream>();
     ims.forEach((im) => {
@@ -181,7 +177,7 @@ export function processUnreadIMs(
         const lastRead = +im.last_read;
 
         const messages = new Array<Message>();
-        const history = converationsHistory[im.id];
+        const history = converationsHistory.get(im.id);
         history?.messages.forEach((message) => {
             const userInfo = userLists.get(message.user);
             const ts = +message.ts;

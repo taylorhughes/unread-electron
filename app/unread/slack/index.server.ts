@@ -3,9 +3,12 @@ import path from "path";
 
 import { app, Cookie, safeStorage } from "electron";
 
-import { loadUnreads, SlackUnreadsResponse } from "./SlackUnreadsLoader.server";
+import SlackUnreadsLoader, {
+    SlackUnreadsResponse,
+} from "./SlackUnreadsLoader.server";
 import { Protocol } from "puppeteer";
 
+let loaderBySlug: { [key: string]: SlackUnreadsLoader | undefined } = {};
 let unreadsLoadingByTeamSlug: { [key: string]: number | undefined } = {};
 let unreadsByTeamSlug: { [key: string]: SlackUnreadsResponse | undefined } = {};
 
@@ -19,21 +22,28 @@ export function startLoading(teamSlug: string): void {
         return;
     }
 
+    let loader;
+    if (!loaderBySlug[teamSlug]) {
+        const cookies = credentialsForTeam(teamSlug) || [];
+        loader = new SlackUnreadsLoader(
+            teamSlug,
+            cookies.map(electronCookieToPuppeteerCookie),
+        );
+        loaderBySlug[teamSlug] = loader;
+    } else {
+        loader = loaderBySlug[teamSlug];
+    }
+
     const now = +new Date();
     unreadsLoadingByTeamSlug[teamSlug] = now;
 
-    const cookies = credentialsForTeam(teamSlug) || [];
-    loadUnreads(
-        teamSlug,
-        cookies.map(electronCookieToPuppeteerCookie),
-        (unreads) => {
-            if (unreadsLoadingByTeamSlug[teamSlug] === now) {
-                unreadsByTeamSlug[teamSlug] = unreads;
-            } else {
-                console.warn("Ignoring stale unreads update...", now);
-            }
-        },
-    );
+    loader!.loadUnreads((unreads) => {
+        if (unreadsLoadingByTeamSlug[teamSlug] === now) {
+            unreadsByTeamSlug[teamSlug] = unreads;
+        } else {
+            console.warn("Ignoring stale unreads update...", now);
+        }
+    });
 }
 
 export function clearLoadingState(teamSlug: string): void {
