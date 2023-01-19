@@ -123,7 +123,7 @@ export default class SlackUnreadsLoader {
     private newPageData(resetResponses = false) {
         return new SlackPageDataModel({
             slug: this.slug,
-            recordResponses: process.env.NODE_ENV === "development",
+            recordResponses: !app.isPackaged,
             resetResponses,
         });
     }

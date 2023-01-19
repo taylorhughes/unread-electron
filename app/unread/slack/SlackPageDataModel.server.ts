@@ -11,6 +11,7 @@ import {
     SubscriptionsThreadGetViewResponse,
     ConversationsHistoryResponse,
 } from "./rawResponses.server";
+import { app } from "electron";
 
 type RequestRecord = {
     querystring: string;
@@ -50,7 +51,7 @@ function recordDebugAPIMetadata(
     apiPath: string,
     metadata: any,
 ) {
-    if (process.env.NODE_ENV !== "development") {
+    if (app.isPackaged) {
         return;
     }
 
