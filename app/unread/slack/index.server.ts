@@ -51,6 +51,11 @@ export function clearLoadingState(teamSlug: string): void {
     delete unreadsByTeamSlug[teamSlug];
 }
 
+export function clearAuthState(teamSlug: string): void {
+    clearLoadingState(teamSlug);
+    delete loaderBySlug[teamSlug];
+}
+
 export function sessionNeedsLogin(teamSlug: string): boolean {
     // If this value is undefined/missing, we don't know yet; so === is important here.
     return unreadsByTeamSlug[teamSlug]?.validSession === false;

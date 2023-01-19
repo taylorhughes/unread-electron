@@ -4,10 +4,7 @@ import { BrowserWindow, session } from "electron";
 
 import type { Cookie } from "electron";
 
-import {
-    clearLoadingState,
-    storeCredentials,
-} from "~/unread/slack/index.server";
+import { clearAuthState, storeCredentials } from "~/unread/slack/index.server";
 import { APP_NAME } from "~/unread/config";
 
 let slackWindow: BrowserWindow | null = null;
@@ -45,7 +42,7 @@ function persistCredentials(slug: string, window: BrowserWindow) {
         });
 
         storeCredentials(slug, cookies);
-        clearLoadingState(slug);
+        clearAuthState(slug);
     });
 }
 
