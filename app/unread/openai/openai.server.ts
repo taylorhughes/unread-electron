@@ -1,19 +1,41 @@
 import { OpenAIApi, Configuration } from "openai";
-
-const OPENAI_API_KEY = "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";
-const OPENAI_ORG = "org-TM6XYv6JNclpz3WgkvTPaBJs";
+import { getOpenAIKey, getOpenAIOrg } from "../settings.server";
 
 const TEXT_MODEL = "text-davinci-003";
+// These produce pretty bad results:
 // const TEXT_MODEL = "text-curie-001";
 // const TEXT_MODEL = "text-ada-001";
 
-const configuration = new Configuration({
-    organization: OPENAI_ORG,
-    apiKey: OPENAI_API_KEY,
-});
-const client = new OpenAIApi(configuration);
+var cachedClientOrgKey = "";
+var cachedClient: OpenAIApi | null = null;
+
+function getClient() {
+    const org = getOpenAIOrg();
+    const key = getOpenAIKey();
+    if (!org || !key) {
+        return null;
+    }
+
+    let cacheKey = `${org}:${key}`;
+    if (cacheKey !== cachedClientOrgKey) {
+        cachedClient = new OpenAIApi(
+            new Configuration({
+                organization: org,
+                apiKey: key,
+            }),
+        );
+        cachedClientOrgKey = cacheKey;
+    }
+
+    return cachedClient;
+}
 
 export async function summarizeThread(parts: string[]) {
+    let client = getClient();
+    if (!client) {
+        return null;
+    }
+
     const ret = await client.createCompletion({
         model: TEXT_MODEL,
         prompt: parts.join("\n\n"),

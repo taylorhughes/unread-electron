@@ -79,7 +79,7 @@ function summarizeStream(
 
     summarizeThread(stream.promptParts)
         .then((result) => {
-            let summary = result.text;
+            let summary = result?.text;
             summary = summary?.replace(/[*]{2,}/g, "*");
             stream.messages.forEach((m) => {
                 for (const user of userIdsMap.values()) {
@@ -93,7 +93,8 @@ function summarizeStream(
                     );
                 }
             });
-            if (result.ellipsis) {
+
+            if (result?.ellipsis) {
                 const parts = (summary ?? "").trim().split(/\s+/);
                 parts.pop(); // sometimes it splits a token at the end
                 stream.summary = parts.join(" ") + "...";

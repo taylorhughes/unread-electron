@@ -1,21 +1,12 @@
 import { Link, useLoaderData } from "@remix-run/react";
 import { json } from "@remix-run/node";
 import RoundedSection from "~/components/RoundedSection";
-import {
-    addTeamSlug,
-    getTeamSlugs,
-    removeTeamSlug,
-} from "~/unread/slack/index.server";
-import {
-    LoaderArgs,
-    ActionArgs,
-    redirect,
-    MetaFunction,
-} from "@remix-run/server-runtime";
+import { getOpenAIKey, getTeamSlugs } from "~/unread/settings.server";
+import { LoaderArgs, MetaFunction } from "@remix-run/server-runtime";
 import { APP_NAME } from "~/unread/config";
 
 export function loader({}: LoaderArgs) {
-    return json({ slackTeams: getTeamSlugs() });
+    return json({ slackTeams: getTeamSlugs(), hasOpenAIKey: !!getOpenAIKey() });
 }
 
 export const meta: MetaFunction = () => {
@@ -24,21 +15,10 @@ export const meta: MetaFunction = () => {
     };
 };
 
-export const action = async ({ request, params: { slug } }: ActionArgs) => {
-    const formData = await request.formData();
-    if (formData.get("addTeamSlug")) {
-        const teamSlug = formData.get("addTeamSlug") as string;
-        addTeamSlug(teamSlug);
-    }
-    if (formData.get("removeTeamSlug")) {
-        const teamSlug = formData.get("removeTeamSlug") as string;
-        removeTeamSlug(teamSlug);
-    }
-    return redirect(`/`);
-};
-
 export default function Index() {
-    const { slackTeams } = useLoaderData<{ slackTeams: Array<string> }>() ?? {};
+    const { slackTeams, hasOpenAIKey } =
+        useLoaderData<{ slackTeams: Array<string>; hasOpenAIKey: boolean }>() ??
+        {};
     return (
         <main>
             <RoundedSection>
@@ -47,31 +27,22 @@ export default function Index() {
                         <Link target="_blank" to={`/unread/${team}`}>
                             {team} ↗
                         </Link>
-                        <form method="post" action="/?index">
-                            <input
-                                type="hidden"
-                                name="removeTeamSlug"
-                                value={team}
-                            />
-                            <button type="submit" title="Remove">
-                                &times;
-                            </button>
-                        </form>
                     </div>
                 ))}
+
+                {slackTeams.length === 0 && (
+                    <div className="text-gray-500">
+                        No Slack teams added yet, add some in settings.
+                    </div>
+                )}
+                {!hasOpenAIKey && (
+                    <div className="text-gray-500">
+                        No OpenAI key added yet, add one in settings.
+                    </div>
+                )}
             </RoundedSection>
             <RoundedSection>
-                <form method="post" action="/?index" className="flex space-x-1">
-                    <input
-                        className="flex-grow p-2"
-                        type="text"
-                        name="addTeamSlug"
-                        placeholder="my-slack-team"
-                    />
-                    <button type="submit" className="btn btn-blue">
-                        Add Slack Team
-                    </button>
-                </form>
+                <Link to="/settings">Edit teams & OpenAI key</Link>
             </RoundedSection>
         </main>
     );

@@ -6,7 +6,7 @@ const pie = require("puppeteer-in-electron");
 let win;
 
 async function createWindow(url) {
-    win = new BrowserWindow({ show: false, width: 400, height: 300 });
+    win = new BrowserWindow({ show: false, width: 400, height: 500 });
     await win.loadURL(url);
     win.show();
 
