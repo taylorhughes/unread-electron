@@ -8,7 +8,7 @@ This app runs and accesses Slack in a hidden browser window; no data is shared w
 
 This app is a proof of concept and comes with no warranty or guarantees. Enjoy!
 
-Download for M1 Mac in [Releases](https://github.com/taylorhughes/unread-electron/releases)
+Download for Apple Silicon Mac in [Releases](https://github.com/taylorhughes/unread-electron/releases)
 
 ## How It Works
 
