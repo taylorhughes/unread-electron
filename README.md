@@ -22,9 +22,3 @@ The following scripts are defined in the `package.json` file:
 - `dev`: Starts the app with hot reloading. Uses nodemon to restart the app when main process files change.
 - `build`: Builds the app for production. Uses [Electron Builder](https://www.electron.build/) to create a distributable package.
 - `start`: Starts the app in production mode. Make sure you ran `build` first.
-
-## Debugging in VSCode
-
-See this guide: https://gist.github.com/kiliman/a9d7c874af03369a1d105a92560d89e9
-
-Choose the `dev` script to debug in dev, and `start` to debug in production.
