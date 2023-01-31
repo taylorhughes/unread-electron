@@ -13,7 +13,6 @@ import {
     sessionNeedsLogin,
     SlackUnreadsResponse,
     SummarizedUnreadStream,
-    startLoading,
     clearLoadingState,
 } from "~/unread/slack/index.server";
 import RoundedSection from "~/components/RoundedSection";
@@ -21,7 +20,6 @@ import Loading from "~/components/Loading";
 import { APP_NAME } from "~/unread/config";
 
 export function loader({ params: { slug } }: LoaderArgs) {
-    startLoading(slug!);
     if (sessionNeedsLogin(slug!)) {
         return redirect(`/login/${slug}`);
     }

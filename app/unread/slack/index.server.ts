@@ -62,6 +62,7 @@ export function sessionNeedsLogin(teamSlug: string): boolean {
 }
 
 export function getUnreads(teamSlug: string): SlackUnreadsResponse | null {
+    startLoading(teamSlug);
     return unreadsByTeamSlug[teamSlug] ?? null;
 }
 
