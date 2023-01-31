@@ -1,10 +1,14 @@
-# Unread Buddy (unread-electron.git)
+<img src="https://github.com/taylorhughes/unread-electron/raw/main/resources/icon.png" alt="Unread Buddy icon" width=100 height=100>
+
+# Unread Buddy
 
 An Electron app that runs Slack locally, pulls out your unread messages, and summarizes them using GPT-3 so you don't have to read all of them.
 
 This app runs and accesses Slack in a hidden browser window; no data is shared with any remote services besides the message content being summarized by OpenAI. (Message content is sent to OpenAI's API in a semi-anonymized fashion in order to summarize it.)
 
 This app is a proof of concept and comes with no warranty or guarantees. Enjoy!
+
+Download for M1 Mac in [Releases](https://github.com/taylorhughes/unread-electron/releases)
 
 ## How It Works
 
