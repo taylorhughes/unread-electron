@@ -79,6 +79,12 @@ function summarizeStream(
 
     summarizeThread(stream.promptParts)
         .then((result) => {
+            if (result.error) {
+                stream.summary = `(${result.error})`;
+                onDone(false);
+                return;
+            }
+
             let summary = result?.text;
             summary = summary?.replace(/[*]{2,}/g, "*");
             stream.messages.forEach((m) => {

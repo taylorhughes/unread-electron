@@ -10,9 +10,10 @@ var cachedClientOrgKey = "";
 var cachedClient: OpenAIApi | null = null;
 
 function getClient() {
-    const org = getOpenAIOrg();
+    const org = getOpenAIOrg() ?? undefined;
     const key = getOpenAIKey();
-    if (!org || !key) {
+    if (!key) {
+        console.error("OpenAI org or key not set");
         return null;
     }
 
@@ -33,17 +34,25 @@ function getClient() {
 export async function summarizeThread(parts: string[]) {
     let client = getClient();
     if (!client) {
-        return null;
+        return {
+            error: "OpenAI key not set",
+        };
     }
 
-    const ret = await client.createCompletion({
-        model: TEXT_MODEL,
-        prompt: parts.join("\n\n"),
-        max_tokens: 64,
-    });
+    let ret;
+    try {
+        ret = await client.createCompletion({
+            model: TEXT_MODEL,
+            prompt: parts.join("\n\n"),
+            max_tokens: 64,
+        });
+    } catch (e) {
+        return {
+            error: e?.toString() ?? "Unknown error",
+        };
+    }
 
     console.log("OpenAI response:", ret.data);
-
     return {
         text: ret.data.choices[0].text,
         ellipsis: ret.data.choices[0].finish_reason === "length",

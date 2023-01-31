@@ -124,7 +124,7 @@ export default function Index() {
                         type="text"
                         name="openAIOrg"
                         defaultValue={openAIOrg}
-                        placeholder="org-TM6..."
+                        placeholder="org-TM6... (optional)"
                     />
                     <button
                         type="submit"
