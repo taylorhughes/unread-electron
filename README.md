@@ -18,7 +18,7 @@ To get the data from Slack, the app uses [puppeteer-in-electron](https://www.npm
 
 Summarizing is the easy part: We take the Slack messages pulled from the previous step and add a prompt to GPT-3, then OpenAI gives us back the summary. We [do our best](https://github.com/taylorhughes/unread-electron/blob/main/app/unread/slack/SlackUnreadsLoader.server.ts#L92) to maintain usernames for display in this step. Welcome to the future.
 
-## Running Locally
+## Running Locally from Source
 
 1. To install our app's dependencies, run the following command:
 
