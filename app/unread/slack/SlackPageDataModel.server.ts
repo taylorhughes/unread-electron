@@ -264,7 +264,7 @@ export default class SlackPageDataModel {
         let apiPath;
         let type: undefined | "api" | "edge";
         if (url.includes("/api/")) {
-            // https://premint.slack.com/api/experiments.getByUser?_x_id=noversion-1672
+            // https://team.slack.com/api/experiments.getByUser?_x_id=noversion-1672
             apiPath = url.split("/api/")[1].split("?")[0];
             type = "api";
         } else if (url.includes("edgeapi")) {

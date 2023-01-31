@@ -23,7 +23,7 @@ function saveSettings(settings: SettingsFile): void {
 }
 
 function getSettingsFilename(): string {
-    return path.join(app.getPath("userData"), "unread-settings.json");
+    return path.join(app.getPath("userData"), "settings.json");
 }
 
 export function getTeamSlugs(): string[] {

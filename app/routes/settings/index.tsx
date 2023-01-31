@@ -45,14 +45,10 @@ export const action = async ({ request }: ActionArgs) => {
     }
 
     if (formData.get("editOpenAI") == "1") {
-        if (formData.get("openAIOrg")) {
-            const openAIOrg = formData.get("openAIOrg") as string;
-            setOpenAIOrg(openAIOrg);
-        }
-        if (formData.get("openAIKey")) {
-            const openAIKey = formData.get("openAIKey") as string;
-            setOpenAIKey(openAIKey);
-        }
+        const openAIOrg = formData.get("openAIOrg") as string;
+        setOpenAIOrg(openAIOrg);
+        const openAIKey = formData.get("openAIKey") as string;
+        setOpenAIKey(openAIKey);
     }
     return redirect(`/settings`);
 };
@@ -69,23 +65,25 @@ export default function Index() {
             <RoundedSection>
                 <Link to="/">&larr; Back to teams list</Link>
             </RoundedSection>
-            <RoundedSection>
-                {slackTeams.map((team) => (
-                    <div key={team} className="flex justify-between">
-                        <span>{team}</span>
-                        <form method="post" action="/settings">
-                            <input
-                                type="hidden"
-                                name="removeTeamSlug"
-                                value={team}
-                            />
-                            <button type="submit" title="Remove">
-                                &times;
-                            </button>
-                        </form>
-                    </div>
-                ))}
-            </RoundedSection>
+            {slackTeams.length > 0 && (
+                <RoundedSection>
+                    {slackTeams.map((team) => (
+                        <div key={team} className="flex justify-between">
+                            <span>{team}</span>
+                            <form method="post" action="/settings">
+                                <input
+                                    type="hidden"
+                                    name="removeTeamSlug"
+                                    value={team}
+                                />
+                                <button type="submit" title="Remove">
+                                    &times;
+                                </button>
+                            </form>
+                        </div>
+                    ))}
+                </RoundedSection>
+            )}
             <RoundedSection>
                 <form
                     method="post"
@@ -96,12 +94,17 @@ export default function Index() {
                         className="flex-grow p-2"
                         type="text"
                         name="addTeamSlug"
-                        placeholder="my-slack-team"
+                        placeholder="your-team-slug"
                     />
                     <button type="submit" className="btn btn-blue">
                         Add Slack Team
                     </button>
                 </form>
+                <p className="text-gray-500 text-xs m-1">
+                    You can find this in emails from slack,
+                    <br />
+                    eg. your-team.slack.com == your-team
+                </p>
             </RoundedSection>
             <RoundedSection>
                 <form

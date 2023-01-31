@@ -32,17 +32,17 @@ export default function Index() {
 
                 {slackTeams.length === 0 && (
                     <div className="text-gray-500">
-                        No Slack teams added yet, add some in settings.
+                        No Slack teams added yet!
                     </div>
                 )}
                 {!hasOpenAIKey && (
                     <div className="text-gray-500">
-                        No OpenAI key added yet, add one in settings.
+                        No OpenAI key, set it in settings.
                     </div>
                 )}
             </RoundedSection>
             <RoundedSection>
-                <Link to="/settings">Edit teams & OpenAI key</Link>
+                <Link to="/settings">Edit teams & set OpenAI key</Link>
             </RoundedSection>
         </main>
     );
