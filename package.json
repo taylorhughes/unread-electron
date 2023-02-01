@@ -21,7 +21,15 @@
             "remix.config.js"
         ],
         "icon": "resources/icon.png",
-        "productName": "Unread Buddy"
+        "productName": "Unread Buddy",
+        "mac": {
+            "identity": "Taylor HUGHES (E6UVSE4WFB)",
+            "hardenedRuntime": true,
+            "gatekeeperAssess": false,
+            "entitlements": "resources/entitlements.plist",
+            "entitlementsInherit": "resources/entitlements.plist"
+        },
+        "afterSign": "scripts/notarize.js"
     },
     "dependencies": {
         "@remix-run/node": "^1.4.0",
@@ -38,12 +46,14 @@
         "remix-electron": "latest"
     },
     "devDependencies": {
+        "@electron/notarize": "^1.2.3",
         "@remix-run/dev": "^1.4.0",
         "@types/react": "^18.0.5",
         "@types/react-dom": "^18.0.1",
         "concurrently": "^7.6.0",
         "cross-env": "^7.0.3",
         "del-cli": "^4.0.1",
+        "dotenv": "^16.0.3",
         "electron": "^22.0.0",
         "electron-builder": "^23.6.0",
         "electron-devtools-installer": "^3.2.0",
